@@ -1434,7 +1434,7 @@ body.loaded .hero-intro {
     margin-bottom: 0;
 }
 
-body.loaded #features .content-shell {
+body.loaded #download .content-shell {
     padding-top: 14px;
 }
 
@@ -2173,6 +2173,9 @@ body.loaded:not(.tbar-collapsed) .page-content {
     width: 100%;
     margin-top: 26px;
     overflow: hidden;
+    /* Rows keep their content's height while the grid's height is pinned for
+       the open/close animation, instead of stretching to fill it. */
+    align-content: start;
     transition: height 0.52s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -2273,6 +2276,10 @@ body.loaded:not(.tbar-collapsed) .page-content {
 
 
 
+/* The custom cursor rules return with the new cursor art. Until then they
+   would request images that are gone (a 404 on every load) and, because of
+   the !important on *, override cursor: pointer on the buttons.
+
 html,
 body,
 * {
@@ -2283,6 +2290,7 @@ body.mouse-down,
 body.mouse-down * {
     cursor: url("../resources/img/player1_grab.png") 40 50, auto !important;
 }
+*/
 
 
 
@@ -2625,6 +2633,8 @@ body.mouse-down * {
     margin-top: 26px;
 
     overflow: hidden;
+
+    align-content: start;
 
     transition:
         height 0.5s
@@ -3035,10 +3045,13 @@ body.reduced-motion .tutorial-list {
 
 @media (max-width: 900px) {
     .tbar {
-        position: fixed !important;
+        /* Sticky, not fixed: the bar takes its own space in the page, so
+           the content starts below it however many rows the links wrap to. */
+        position: sticky !important;
         top: 8px !important;
-        left: 8px !important;
-        right: 8px !important;
+        left: auto !important;
+        right: auto !important;
+        margin: 8px 8px 0 !important;
         width: auto !important;
         max-width: none !important;
         height: auto !important;
@@ -3122,7 +3135,6 @@ body.reduced-motion .tutorial-list {
     body.loaded.tbar-collapsed .page-content {
         padding-left: 12px !important;
         padding-right: 12px !important;
-        padding-top: 82px !important;
     }
 
     .hero {
@@ -3146,21 +3158,17 @@ body.reduced-motion .tutorial-list {
         font-size: 0.58rem !important;
         line-height: 1.05 !important;
     }
-
-    .page-content,
-    body.loaded .page-content,
-    body.loaded:not(.tbar-collapsed) .page-content,
-    body.loaded.tbar-collapsed .page-content {
-        padding-top: 108px !important;
-    }
 }
 
 @media (max-width: 900px) {
     .tbar {
-        position: fixed !important;
+        /* Sticky, not fixed: the bar takes its own space in the page, so
+           the content starts below it however many rows the links wrap to. */
+        position: sticky !important;
         top: 8px !important;
-        left: 8px !important;
-        right: 8px !important;
+        left: auto !important;
+        right: auto !important;
+        margin: 8px 8px 0 !important;
         width: auto !important;
         max-width: none !important;
         height: auto !important;
@@ -3275,15 +3283,11 @@ body.reduced-motion .tutorial-list {
     body.loaded:not(.tbar-collapsed) .page-content {
         padding-left: 12px !important;
         padding-right: 12px !important;
-        padding-top: 88px !important;
-        transition:
-            padding-top 0.42s cubic-bezier(0.22, 1, 0.36, 1) !important;
     }
 
     body.loaded.tbar-collapsed .page-content {
         padding-left: 12px !important;
         padding-right: 12px !important;
-        padding-top: 44px !important;
     }
 
     .hero {
@@ -3306,16 +3310,6 @@ body.reduced-motion .tutorial-list {
         padding: 4px 3px !important;
         font-size: 0.54rem !important;
         line-height: 1.05 !important;
-    }
-
-    .page-content,
-    body.loaded .page-content,
-    body.loaded:not(.tbar-collapsed) .page-content {
-        padding-top: 112px !important;
-    }
-
-    body.loaded.tbar-collapsed .page-content {
-        padding-top: 44px !important;
     }
 }
 
@@ -3504,4 +3498,892 @@ body.reduced-motion .tutorial-list {
         );
 
     outline: none;
+}
+
+/* Below 900px the bar sits in the page (sticky, above): room under it for
+   the toggle tab that hangs below it, which otherwise covered the top of
+   the hero. Collapsed, the bar leaves the page's flow (fixed, slid up), so
+   the content moves up instead of keeping an empty space where the bar
+   was; the padding keeps it clear of the tab that is still showing. */
+@media (max-width: 900px) {
+    body.loaded:not(.tbar-collapsed) .tbar,
+    body.reduced-motion.loaded:not(.tbar-collapsed) .tbar {
+        margin-bottom: 36px !important;
+    }
+
+    body.loaded.tbar-collapsed .tbar,
+    body.reduced-motion.loaded.tbar-collapsed .tbar {
+        position: fixed !important;
+        left: 8px !important;
+        right: 8px !important;
+        margin: 0 !important;
+    }
+
+    body.loaded.tbar-collapsed .page-content {
+        padding-top: 52px !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   Phone and tablet navigation (900px and below)
+
+   A slim fixed bar (name and a Menu button) that opens the links as a panel.
+   This block comes last and uses "html body" selectors so it wins over the
+   older overlapping rules above, which also use !important. At 901px and
+   wider none of it applies and the side bar is untouched.
+   ------------------------------------------------------------------ */
+.tbar-menu-button,
+.nav-scrim {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    html {
+        scroll-padding-top: 64px;
+    }
+
+    html body #tbar.tbar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: auto !important;
+        height: 52px !important;
+        margin: 0 !important;
+        padding: 0 8px 0 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        border-width: 0 0 1px 0 !important;
+        border-radius: 0 !important;
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+        overflow: visible !important;
+        transition: transform 0.3s ease !important;
+    }
+
+    html body.nav-hidden #tbar.tbar {
+        transform: translateY(-100%) !important;
+    }
+
+    html body .tbar-toggle,
+    html body #tbarToggle {
+        display: none !important;
+    }
+
+    html body .tbar-brand {
+        display: block !important;
+        margin: 0 !important;
+        font-size: 1.15rem !important;
+        letter-spacing: 0.2em !important;
+    }
+
+    html body .tbar-brand-extra {
+        display: none;
+    }
+
+    html body .tbar-menu-button {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 10px;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0 14px;
+        border: 1px solid rgba(126, 210, 255, 0.28);
+        border-radius: 12px;
+        background: rgba(15, 15, 55, 0.7);
+        color: #c6f4ff;
+        font: inherit;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+
+    html body .tbar-menu-button:hover,
+    html body .tbar-menu-button:focus-visible,
+    html body.nav-open .tbar-menu-button {
+        color: white;
+        background: rgba(60, 90, 190, 0.45);
+    }
+
+    html body .tbar-menu-button:focus-visible,
+    html body .tbar-links a:focus-visible,
+    html body .tbar-motion-toggle:focus-visible {
+        outline: 2px solid #9feaff;
+        outline-offset: 2px;
+    }
+
+    /* Three bars that become a cross while the menu is open. */
+    .tbar-menu-icon,
+    .tbar-menu-icon::before,
+    .tbar-menu-icon::after {
+        display: block;
+        width: 18px;
+        height: 2px;
+        border-radius: 1px;
+        background: currentColor;
+        transition: transform 0.25s ease, background 0.25s ease;
+    }
+
+    .tbar-menu-icon {
+        position: relative;
+    }
+
+    .tbar-menu-icon::before,
+    .tbar-menu-icon::after {
+        content: "";
+        position: absolute;
+        left: 0;
+    }
+
+    .tbar-menu-icon::before {
+        top: -6px;
+    }
+
+    .tbar-menu-icon::after {
+        top: 6px;
+    }
+
+    body.nav-open .tbar-menu-icon {
+        background: transparent;
+    }
+
+    body.nav-open .tbar-menu-icon::before {
+        transform: translateY(6px) rotate(45deg);
+    }
+
+    body.nav-open .tbar-menu-icon::after {
+        transform: translateY(-6px) rotate(-45deg);
+    }
+
+    /* The panel: closed it is not drawn and cannot be tabbed into. */
+    html body .tbar-links {
+        position: absolute !important;
+        top: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+        width: auto !important;
+        max-height: calc(100vh - 64px) !important;
+        max-height: calc(100dvh - 64px) !important;
+        overflow-y: auto !important;
+        padding: 8px 12px 14px !important;
+        border-bottom: 1px solid rgba(151, 115, 255, 0.26);
+        background: #0d1040 !important;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+        visibility: hidden;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition:
+            opacity 0.2s ease,
+            transform 0.2s ease,
+            visibility 0s linear 0.2s !important;
+    }
+
+    html body.nav-open .tbar-links {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: 0s !important;
+    }
+
+    html body .tbar-links a,
+    html body .tbar-motion-toggle {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        width: 100% !important;
+        max-width: none !important;
+        min-height: 48px !important;
+        padding: 10px 16px !important;
+        font-size: 1.05rem !important;
+        line-height: 1.2 !important;
+        letter-spacing: 0.04em !important;
+        text-align: left !important;
+        border-radius: 12px !important;
+    }
+
+    html body .tbar-motion-toggle {
+        margin-top: 6px !important;
+        border-top: 1px solid rgba(151, 115, 255, 0.22);
+    }
+
+    .nav-scrim {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 900;
+        background: rgba(3, 4, 20, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    body.nav-open .nav-scrim {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Room for the fixed bar; the old collapsed-bar offsets no longer apply. */
+    html body .page-content,
+    html body.loaded .page-content,
+    html body.loaded.tbar-collapsed .page-content,
+    html body.loaded:not(.tbar-collapsed) .page-content {
+        padding-top: 52px !important;
+    }
+
+    html body .page-section {
+        scroll-margin-top: 64px;
+    }
+}
+
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+    html body #tbar.tbar,
+    html body .tbar-links,
+    .tbar-menu-icon,
+    .tbar-menu-icon::before,
+    .tbar-menu-icon::after,
+    .nav-scrim {
+        transition: none !important;
+    }
+}
+
+/* The tutorial toolbar's single column was "1fr", which cannot shrink below
+   its widest content; the sort button's 165px minimum pushed the whole page
+   wider than a phone. */
+@media (max-width: 720px) {
+    .tutorial-toolbar {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .tutorial-sort-button {
+        min-width: 0;
+    }
+
+    /* Hidden, the sort control would still keep its row (and a gap) under the
+       search box; closed it takes no height. */
+    .tutorial-sort-wrap.tutorial-sort-hidden {
+        height: 0;
+    }
+}
+
+/* The title's orbit ring is drawn wider than the screen on a phone. Clipping
+   it at the page edge stops the browser from widening the page to fit it
+   (which also shrank everything else and made the page scroll sideways; on a
+   desktop window it added a sideways scroll bar). */
+html body .page-content {
+    overflow-x: clip;
+}
+
+/* ------------------------------------------------------------------
+   Phone and tablet typography and spacing (900px and below)
+
+   The desktop sizes (a 24px spaced-out kicker, 22px headings, 1.7 line
+   height, 30px panel padding, 100px under every section) made a phone page
+   very long. Normal mobile sizes: 15px text, 19px headings, a 13px kicker.
+   This block comes after the older rules and uses "html body" selectors so
+   it wins over their !important overrides.
+   ------------------------------------------------------------------ */
+@media (max-width: 900px) {
+    html body .box-kicker {
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        letter-spacing: 0.2em;
+    }
+
+    html body .content-box h2 {
+        margin-bottom: 10px;
+        font-size: 1.25rem;
+        line-height: 1.25;
+    }
+
+    html body .content-box p,
+    html body .credits-notice {
+        font-size: 0.94rem;
+        line-height: 1.55;
+    }
+
+    html body .content-shell,
+    html body.loaded .content-shell,
+    html body.loaded #download .content-shell {
+        padding: 12px 0 28px;
+    }
+
+    html body .content-box,
+    html body .intro-box {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    html body .welcome {
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+    }
+
+    html body .mod-loader {
+        margin-top: 16px;
+        font-size: 0.75rem;
+    }
+
+    html body .riftwii {
+        font-size: 2.6rem;
+    }
+
+    html body .hero,
+    html body.loaded .hero {
+        padding-bottom: 6px !important;
+    }
+
+    html body .features-grid {
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    html body .feature-group {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    html body .feature-group h3 {
+        margin-bottom: 8px;
+        font-size: 1rem;
+    }
+
+    html body .feature-group li {
+        margin: 5px 0;
+        font-size: 0.92rem;
+        line-height: 1.45;
+    }
+
+    html body .placeholder-image {
+        margin-bottom: 14px;
+        border-radius: 12px;
+    }
+
+    html body .release-card h3 {
+        margin-bottom: 8px;
+        font-size: 1.15rem;
+    }
+
+    html body .release-button,
+    html body .content-link,
+    html body .download-button {
+        margin-top: 14px;
+    }
+
+    html body .site-footer {
+        margin-top: 8px;
+    }
+}
+
+/* Screenshots are a grid, not one tall list: three columns on a tablet, two
+   on a phone (down to 320px), the same gap everywhere. */
+@media (max-width: 900px) {
+    html body .grid-image {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin: 12px 0 16px;
+    }
+
+    html body .grid-image img {
+        border-radius: 10px;
+    }
+}
+
+@media (max-width: 599px) {
+    html body .grid-image {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+/* The Themes page (themes.html). It reuses the panels, the navigation bar
+   and the search box above; these rules are only what is special to it:
+   the title, the grid of theme cards and the numbered steps. */
+.themes-page .themes-top .content-shell {
+    padding-top: clamp(48px, 9vh, 96px);
+}
+
+.themes-page .content-box h1 {
+    margin: 0 0 14px;
+    font-size: clamp(1.9rem, 4.4vw, 3rem);
+    font-weight: normal;
+    line-height: 1.12;
+    color: #f6fbff;
+    text-shadow:
+        0 0 18px rgba(88, 221, 255, 0.3),
+        0 0 36px rgba(158, 80, 255, 0.22);
+}
+
+.themes-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.themes-actions .download-button {
+    margin-top: 22px;
+}
+
+.themes-page .content-box h3 {
+    margin: 0 0 6px;
+    font-size: 1.15rem;
+    font-weight: normal;
+    color: #f6fbff;
+    overflow-wrap: anywhere;
+}
+
+.themes-page .content-box a {
+    color: #8feaff;
+}
+
+.themes-page .content-box a.download-button {
+    color: #eafdff;
+}
+
+.themes-page .content-box code {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.86em;
+    color: #eafdff;
+    overflow-wrap: anywhere;
+    background: rgba(59, 211, 255, 0.12);
+    padding: 1px 6px;
+    border-radius: 6px;
+}
+
+.themes-page .tutorial-browser {
+    margin-top: 20px;
+}
+
+.themes-page .tutorial-search[hidden] {
+    display: none;
+}
+
+.themes-page .themes-note {
+    margin-top: 22px;
+    font-size: 0.9rem;
+}
+
+.theme-grid {
+    display: grid;
+    gap: 20px;
+    margin-top: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+}
+
+.theme-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid rgba(126, 195, 255, 0.2);
+    border-radius: 18px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(25, 57, 118, 0.34),
+            rgba(73, 31, 132, 0.28)
+        );
+    box-shadow:
+        0 10px 28px rgba(0, 0, 30, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    transition:
+        border-color 0.25s ease,
+        transform 0.25s ease;
+}
+
+.theme-card:hover {
+    border-color: rgba(126, 229, 255, 0.55);
+    transform: translateY(-3px);
+}
+
+.theme-preview {
+    aspect-ratio: 4 / 3;
+    display: grid;
+    place-items: center;
+    background: rgba(4, 8, 40, 0.55);
+    border-bottom: 1px solid rgba(135, 181, 255, 0.2);
+}
+
+.theme-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.theme-no-preview {
+    color: rgba(190, 206, 245, 0.74);
+    font-family: Arial, sans-serif;
+    font-size: 0.9rem;
+}
+
+.theme-card-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px 16px;
+}
+
+.theme-card-body h3 {
+    margin: 0;
+}
+
+.themes-page .content-box .theme-by {
+    color: rgba(190, 206, 245, 0.74);
+    font-size: 0.92rem;
+    overflow-wrap: anywhere;
+}
+
+.theme-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.theme-tag {
+    padding: 2px 10px;
+    border: 1px solid rgba(98, 217, 255, 0.25);
+    border-radius: 999px;
+    background: rgba(59, 211, 255, 0.14);
+    color: #d6f6ff;
+    font-family: Arial, sans-serif;
+    font-size: 0.78rem;
+}
+
+.theme-card .theme-download {
+    margin-top: auto;
+}
+
+.theme-hash {
+    color: rgba(190, 206, 245, 0.74);
+    font-family: Arial, sans-serif;
+    font-size: 0.8rem;
+}
+
+.theme-hash summary {
+    cursor: pointer;
+}
+
+.themes-page .content-box .theme-hash p {
+    margin: 6px 0 0;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.theme-empty {
+    padding: 22px;
+    border: 1px solid rgba(135, 181, 255, 0.2);
+    border-radius: 18px;
+    background: rgba(4, 8, 40, 0.35);
+    text-align: center;
+}
+
+.themes-page .content-box .theme-status {
+    color: rgba(190, 206, 245, 0.74);
+}
+
+.theme-steps {
+    display: grid;
+    gap: 16px;
+    margin-top: 22px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+    counter-reset: theme-step;
+}
+
+.theme-step {
+    padding: 18px;
+    border: 1px solid rgba(126, 195, 255, 0.16);
+    border-radius: 18px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(25, 57, 118, 0.34),
+            rgba(73, 31, 132, 0.28)
+        );
+}
+
+.theme-step::before {
+    counter-increment: theme-step;
+    content: counter(theme-step);
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(126, 229, 255, 0.5);
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(59, 211, 255, 0.3), rgba(154, 79, 255, 0.34));
+    color: #eafdff;
+}
+
+.theme-rules {
+    display: grid;
+    gap: 14px;
+    margin-top: 22px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+.theme-rule {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.theme-rule svg {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin-top: 2px;
+    color: #9feaff;
+}
+
+@media (max-width: 900px) {
+    .themes-page .themes-top .content-shell {
+        padding-top: 14px;
+    }
+
+    .theme-step,
+    .theme-card-body {
+        padding: 14px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   Phone hero and first screen (900px and below)
+
+   On a phone the first block is subtext under the logo, not a panel of its
+   own: the tagline as a short line under MOD LOADER and the sentence as small
+   muted text, with the box kicker (a second "RIFTWII") left out. The hero is
+   smaller and the Download banner comes after the version and its button, so
+   the Download heading and button are on the first screen of a phone (about
+   412x690 visible) without scrolling. This block is last and uses "html body"
+   selectors to win over the older rules above.
+   ------------------------------------------------------------------ */
+@media (max-width: 900px) {
+    html body .hero,
+    html body.loaded .hero {
+        padding-top: 10px !important;
+        padding-bottom: 0 !important;
+    }
+
+    html body .welcome {
+        margin-bottom: 6px;
+        font-size: 0.8rem;
+    }
+
+    html body .riftwii {
+        font-size: 2.1rem;
+    }
+
+    html body .mod-loader {
+        margin-top: 10px;
+        font-size: 0.72rem;
+    }
+
+    html body .hero-intro,
+    html body .hero-intro.box-visible {
+        margin: 8px auto 0;
+        padding: 0 6px;
+        max-width: 34em;
+        background: none;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        text-align: center;
+    }
+
+    html body .hero-intro::before,
+    html body .hero-intro::after {
+        display: none;
+    }
+
+    html body .hero-intro .box-kicker {
+        display: none;
+    }
+
+    html body .hero-intro h2 {
+        margin: 0 0 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        line-height: 1.3;
+    }
+
+    html body .hero-intro p {
+        margin: 0;
+        font-size: 0.82rem;
+        line-height: 1.45;
+        text-wrap: balance;
+        color: rgba(215, 232, 255, 0.68);
+    }
+
+    /* The banner comes after the version and the button. */
+    html body #download .content-shell {
+        padding-top: 4px;
+        padding-bottom: 20px;
+    }
+
+    html body #download .content-box {
+        display: flex;
+        flex-direction: column;
+        padding: 14px 16px 16px;
+    }
+
+    html body #download .box-kicker {
+        margin-bottom: 4px;
+    }
+
+    html body #download .release-grid {
+        order: 1;
+    }
+
+}
+
+/* ------------------------------------------------------------------
+   Desktop hero and first screen (above 900px)
+
+   Same idea as on phones: the first block is subtext under the logo, not a
+   panel of its own, and the hero shrinks with the window's height so the
+   Download heading and its button stay on the first screen of a short desktop
+   window (down to about 1000x511) as well as a tall one. Sizes are clamps of
+   vh, so a 1440x900 screen keeps a large logo. This block is last and uses
+   "html body" selectors to win over the older rules above.
+   ------------------------------------------------------------------ */
+@media (min-width: 901px) {
+    html body .hero,
+    html body.loaded .hero {
+        padding-top: clamp(14px, 4.5vh, 56px) !important;
+        padding-bottom: 0 !important;
+    }
+
+    html body .welcome {
+        margin-bottom: clamp(2px, 1vh, 12px);
+        font-size: clamp(0.7rem, 2.2vh, 1.2rem);
+    }
+
+    html body .riftwii {
+        font-size: clamp(2rem, 8.5vh, 5.5rem);
+    }
+
+    html body .mod-loader {
+        margin-top: clamp(6px, 2.2vh, 22px);
+        font-size: clamp(0.62rem, 1.8vh, 1rem);
+    }
+
+    html body .hero-intro,
+    html body .hero-intro.box-visible {
+        margin: clamp(6px, 1.8vh, 18px) auto 0;
+        padding: 0 6px;
+        width: min(40em, 100%);
+        background: none;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        text-align: center;
+    }
+
+    html body .hero-intro::before,
+    html body .hero-intro::after {
+        display: none;
+    }
+
+    html body .hero-intro .box-kicker {
+        display: none;
+    }
+
+    html body .hero-intro h2 {
+        margin: 0 0 clamp(2px, 0.6vh, 6px);
+        font-size: clamp(0.9rem, 2.6vh, 1.25rem);
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        line-height: 1.3;
+    }
+
+    html body .hero-intro p {
+        margin: 0;
+        font-size: clamp(0.75rem, 1.9vh, 0.95rem);
+        line-height: 1.45;
+        text-wrap: balance;
+        color: rgba(215, 232, 255, 0.68);
+    }
+
+    /* Download sits right under the intro, not centred in a tall section. */
+    html body #download {
+        min-height: 0;
+    }
+
+    html body #download .content-shell,
+    html body.loaded #download .content-shell {
+        padding-top: clamp(4px, 1.5vh, 14px);
+        padding-bottom: 40px;
+    }
+
+    html body #download .content-box {
+        padding-top: clamp(12px, 2.5vh, 28px);
+        padding-bottom: clamp(12px, 2.5vh, 28px);
+    }
+}
+
+/* ------------------------------------------------------------------
+   Side bar in short windows (above 900px wide)
+
+   The side bar is about 690px tall at its normal size, so in a window
+   shorter than that its last rows (Credits, Animations) were cut off below
+   the window edge. Up to 740px tall everything in it scales with the window
+   height, down to 32px rows and 13px text; the bar stays centred. Where even
+   that does not fit (under about 400px tall) the bar is capped to the window
+   and the link list scrolls inside it, with the title still showing. Taller
+   windows and the phone and tablet bar (900px and below) are untouched.
+   "html body" selectors and !important beat the older overlapping rules
+   above, as in the block before this one.
+   ------------------------------------------------------------------ */
+@media (min-width: 901px) and (max-height: 740px) {
+    html body #tbar.tbar {
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+        max-height: calc(100vh - 24px) !important;
+        max-height: calc(100dvh - 24px) !important;
+        padding: clamp(10px, 3.2vh, 24px) clamp(10px, 2.4vh, 18px) !important;
+        border-radius: clamp(14px, 3vh, 22px) !important;
+    }
+
+    html body .tbar-brand {
+        flex: 0 0 auto !important;
+        margin: 0 8px clamp(8px, 3vh, 22px) !important;
+        font-size: clamp(0.85rem, 3.2vh, 1.5rem) !important;
+        line-height: 1.2 !important;
+    }
+
+    html body .tbar-links {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        gap: clamp(3px, 1vh, 8px) !important;
+        padding: 2px 6px 2px 2px !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(126, 210, 255, 0.35) transparent !important;
+    }
+
+    html body .tbar-links a,
+    html body .tbar-motion-toggle {
+        flex: 0 0 auto !important;
+        box-sizing: border-box !important;
+        min-height: 32px !important;
+        padding: clamp(6px, 2vh, 15px) clamp(10px, 2vh, 18px) !important;
+        font-size: clamp(0.82rem, 3.1vh, clamp(1rem, 2vw, 1.45rem)) !important;
+        line-height: 1.15 !important;
+        border-radius: clamp(9px, 1.8vh, 13px) !important;
+    }
 }

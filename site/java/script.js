@@ -4,6 +4,11 @@ if ("scrollRestoration" in history) {
     history.scrollRestoration = "manual";
 }
 
+// A link from another page (the Themes page's "Features", say) arrives as
+// index.html#features. The page always starts at the top for its intro, so
+// the section is remembered here and scrolled to once the intro is over.
+const requestedSectionId = decodeURIComponent(window.location.hash.slice(1));
+
 if (window.location.hash) {
     history.replaceState(
         null,
@@ -14,8 +19,13 @@ if (window.location.hash) {
 
 window.scrollTo(0, 0);
 
-window.addEventListener("pageshow", () => {
-    window.scrollTo(0, 0);
+window.addEventListener("pageshow", (event) => {
+    // A page restored from the back/forward cache stays as it was, already
+    // loaded. A fresh load starts at the top for its intro, but not once the
+    // intro is over: a skipped intro has already scrolled to its #section.
+    if (!event.persisted && !introFinished) {
+        window.scrollTo(0, 0);
+    }
 });
 
 const starsContainer = document.getElementById("stars");
@@ -249,11 +259,17 @@ if (riftwii) {
 const tbar = document.getElementById("tbar");
 const tbarToggle = document.getElementById("tbarToggle");
 const navLinks = [...document.querySelectorAll(".tbar-links a[data-section]")];
-const sections = ["home", "features", "tutorials", "download", "socials", "credits"]
+const sections = ["home", "download", "features", "tutorials", "socials", "credits"]
     .map((id) => document.getElementById(id))
     .filter(Boolean);
 
 function setActiveSection(sectionId) {
+    // The Themes page has no sections (its links go to the home page), and
+    // its own link is marked in the HTML, so there is nothing to highlight.
+    if (!sections.length) {
+        return;
+    }
+
     navLinks.forEach((link) => {
         link.classList.toggle(
             "active",
@@ -278,8 +294,94 @@ if (tbarToggle) {
     });
 }
 
+// Phone and tablet menu (below 900px): the links sit in a panel under a slim
+// bar. It closes on a link, on a tap outside, on Escape and when the window
+// grows to the desktop layout, where the side bar shows the links itself.
+const navMenuButton = document.getElementById("navMenuButton");
+const navPanel = document.getElementById("navPanel");
+const compactNavQuery = window.matchMedia("(max-width: 900px)");
+const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+function isNavOpen() {
+    return document.body.classList.contains("nav-open");
+}
+
+function setNavOpen(open, { returnFocus = false } = {}) {
+    document.body.classList.toggle("nav-open", open);
+
+    if (navMenuButton) {
+        navMenuButton.setAttribute("aria-expanded", String(open));
+    }
+
+    if (open) {
+        // An open menu has to be visible, whatever the scroll hid.
+        document.body.classList.remove("nav-hidden");
+    } else if (returnFocus && navMenuButton) {
+        navMenuButton.focus();
+    }
+}
+
+if (navMenuButton) {
+    navMenuButton.addEventListener("click", () => {
+        setNavOpen(!isNavOpen());
+    });
+
+    document.addEventListener("click", (event) => {
+        if (isNavOpen() && !tbar.contains(event.target)) {
+            setNavOpen(false);
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && isNavOpen()) {
+            setNavOpen(false, { returnFocus: true });
+        }
+    });
+
+    compactNavQuery.addEventListener("change", (event) => {
+        if (!event.matches) {
+            setNavOpen(false);
+            document.body.classList.remove("nav-hidden");
+        }
+    });
+}
+
+// The slim bar slides away while reading down the page and comes back on the
+// first scroll up, so it never covers the content for long. Not done for
+// reduced motion, or while the menu or a link in the bar has focus.
+let lastScrollY = window.scrollY;
+
+function updateNavVisibility() {
+    const currentY = window.scrollY;
+    const delta = currentY - lastScrollY;
+    const barHasFocus = tbar && tbar.contains(document.activeElement);
+
+    if (
+        !compactNavQuery.matches ||
+        reducedMotionQuery.matches ||
+        document.body.classList.contains("reduced-motion") ||
+        isNavOpen() ||
+        barHasFocus ||
+        currentY < 80
+    ) {
+        document.body.classList.remove("nav-hidden");
+    } else if (delta > 6) {
+        document.body.classList.add("nav-hidden");
+    } else if (delta < -6) {
+        document.body.classList.remove("nav-hidden");
+    }
+
+    if (Math.abs(delta) > 6) {
+        lastScrollY = currentY;
+    }
+}
+
+window.addEventListener("scroll", updateNavVisibility, { passive: true });
+
 navLinks.forEach((link) => {
     link.addEventListener("click", (event) => {
+        setNavOpen(false);
+
         const sectionId = link.dataset.section;
         const section = document.getElementById(sectionId);
 
@@ -298,6 +400,10 @@ navLinks.forEach((link) => {
 });
 
 function updateScrollSpy() {
+    if (!sections.length) {
+        return;
+    }
+
     if (!document.body.classList.contains("loaded")) {
         setActiveSection("home");
         return;
@@ -432,21 +538,14 @@ const tutorialSortWrap = tutorialSortButton
 
 const FEATURED_TUTORIALS = [
     "getting-started.html",
-    "installing-mods.html",
-    "troubleshooting.html"
+    "installing-mods.html"
 ];
-
-const TUTORIAL_REPO_FALLBACK = {
-    owner: "KakarottoCake",
-    repo: "Riftwii"
-};
 
 const TUTORIAL_FALLBACK_FILES = [
     "getting-started.html",
     "installing-mods.html",
     "send-a-problem-report.html",
     "updating-riftwii.html",
-    "using-a-usb-disc-drive.html",
     "virtual-sd-cards.html",
     "developers.html"
 ];
@@ -520,54 +619,6 @@ async function scanTutorialJson() {
     }
 
     return files;
-}
-
-function getGitHubRepositoryFromPage() {
-    const hostname = window.location.hostname.toLowerCase();
-
-    if (hostname.endsWith(".github.io")) {
-        const owner = hostname.split(".")[0];
-        const segments = window.location.pathname
-            .split("/")
-            .filter(Boolean);
-
-        const repo = segments.length
-            ? segments[0]
-            : `${owner}.github.io`;
-
-        return { owner, repo };
-    }
-
-    return TUTORIAL_REPO_FALLBACK;
-}
-
-async function scanTutorialGitHubFolder() {
-    const { owner, repo } = getGitHubRepositoryFromPage();
-
-    const endpoint =
-        `https://api.github.com/repos/${encodeURIComponent(owner)}/` +
-        `${encodeURIComponent(repo)}/contents/gitpage/tutorials`;
-
-    const response = await fetch(endpoint, {
-        headers: {
-            "Accept": "application/vnd.github+json"
-        },
-        cache: "no-store"
-    });
-
-    if (!response.ok) {
-        throw new Error("GitHub tutorials request failed");
-    }
-
-    const contents = await response.json();
-
-    if (!Array.isArray(contents)) {
-        throw new Error("Unexpected GitHub tutorials response");
-    }
-
-    return contents
-        .filter((item) => item.type === "file" && /\.html?$/i.test(item.name))
-        .map((item) => item.name);
 }
 
 function sortTutorials(items) {
@@ -847,6 +898,31 @@ scanTutorials();
 
 
 
+// The Features and Credits grids animate their height by pinning it to
+// pixels. A grid with a pinned height stretches its rows to fill it, so the
+// boxes that stay after a collapse used to grow tall (and scrollHeight, read
+// while they were stretched, returned the old height, so the section never
+// shrank until it snapped). The grids therefore use align-content: start, and
+// the new height is measured with the height set back to auto.
+function prefersReducedMotion() {
+    return (
+        reducedMotionQuery.matches ||
+        document.body.classList.contains("reduced-motion")
+    );
+}
+
+function naturalHeight(element, pinnedHeight) {
+    element.style.height = "auto";
+    const height = element.getBoundingClientRect().height;
+    element.style.height = `${pinnedHeight}px`;
+
+    // Reading the layout makes the pinned height apply before the next change
+    // to it, so the transition starts from there.
+    element.getBoundingClientRect();
+
+    return height;
+}
+
 const featuresGrid = document.getElementById("featuresGrid");
 const featuresToggle = document.getElementById("featuresToggle");
 
@@ -951,6 +1027,10 @@ function renderFeatures(animate = true) {
         ? featureSections
         : featureSections.slice(0, 2);
 
+    if (prefersReducedMotion()) {
+        animate = false;
+    }
+
     if (!animate) {
         drawFeatureGroups(visibleSections, false);
         featuresGrid.style.height = "auto";
@@ -973,7 +1053,7 @@ function renderFeatures(animate = true) {
             drawFeatureGroups(visibleSections, true);
 
             const newHeight =
-                featuresGrid.scrollHeight;
+                naturalHeight(featuresGrid, oldHeight);
 
             requestAnimationFrame(() => {
                 featuresGrid.style.height =
@@ -1055,12 +1135,49 @@ if (featuresToggle) {
 
 loadFeaturesMarkdown();
 
-setTimeout(() => {
+// The title intro lasts about a second and a half. Any tap, key press, click
+// or scroll attempt skips the rest of it, and it is skipped altogether when
+// the device asks for reduced motion, so nobody waits to start reading.
+const INTRO_MS = 1500;
+let introFinished = false;
+
+function finishIntro() {
+    if (introFinished) {
+        return;
+    }
+
+    introFinished = true;
     document.body.classList.add("loaded");
     document.body.classList.remove("page-locked");
     startBoxReveals();
     updateScrollSpy();
-}, 2000);
+
+    const requestedSection = requestedSectionId
+        ? document.getElementById(requestedSectionId)
+        : null;
+
+    if (requestedSection) {
+        requestedSection.scrollIntoView({ behavior: "instant", block: "start" });
+    }
+}
+
+// A page that is already "loaded" in its HTML (the Themes page) has no title
+// intro to wait for.
+const introTimer = setTimeout(
+    finishIntro,
+    reducedMotionQuery.matches || document.body.classList.contains("loaded") ? 0 : INTRO_MS
+);
+
+["pointerdown", "keydown", "wheel", "touchstart"].forEach((eventName) => {
+    window.addEventListener(
+        eventName,
+        () => {
+            clearTimeout(introTimer);
+            finishIntro();
+        },
+        { once: true, passive: true }
+    );
+});
 
 
 
@@ -1348,6 +1465,10 @@ function renderCredits(
             );
 
 
+    if (prefersReducedMotion()) {
+        animate = false;
+    }
+
     const oldHeight =
         creditsGrid
             .getBoundingClientRect()
@@ -1461,8 +1582,10 @@ function renderCredits(
 
 
                 const newHeight =
-                    creditsGrid
-                        .scrollHeight;
+                    naturalHeight(
+                        creditsGrid,
+                        oldHeight
+                    );
 
 
                 requestAnimationFrame(
@@ -1627,7 +1750,9 @@ function setReducedMotion(enabled) {
     updateMotionToggle();
 }
 
-document.body.classList.remove("reduced-motion");
+// Start with animations off when the device asks for less motion; the button
+// in the menu can still turn them on.
+document.body.classList.toggle("reduced-motion", reducedMotionQuery.matches);
 updateMotionToggle();
 
 if (motionToggle) {
@@ -1638,3 +1763,164 @@ if (motionToggle) {
         setReducedMotion(!reduced);
     });
 }
+
+
+// The Themes page: fills the theme list from themes.json. The themes live in
+// their own repository (RiftWii/themes), which GitHub serves under this same
+// address, at /themes/, so the list and every picture and zip in it are
+// same-origin. Every value from the file is put in with textContent or
+// checked URLs, never as HTML.
+(function () {
+    "use strict";
+
+    const list = document.getElementById("themeList");
+    const count = document.getElementById("count");
+    const search = document.getElementById("themeSearch");
+
+    if (!list || !count || !search) {
+        return;
+    }
+
+    // Opened from this computer (a local copy of the site, to work on the
+    // page), /themes/ is looked for next to the page instead.
+    const localPreview = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
+    const themesJsonUrl = localPreview
+        ? location.origin + "/themes/themes.json"
+        : "https://riftwii.github.io/themes/themes.json";
+
+    let themes = [];
+
+    function el(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text != null) node.textContent = text;
+        return node;
+    }
+
+    // Only links into this site are used, so a bad entry can't point
+    // a download or an image somewhere else.
+    function ownUrl(value) {
+        try {
+            const url = new URL(value, themesJsonUrl);
+            return url.origin === location.origin ? url.href : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function formatSize(bytes) {
+        if (!(bytes >= 0)) return "";
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB";
+        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+    }
+
+    function licenseLabel(id) {
+        const names = { "CC0-1.0": "CC0", "CC-BY-4.0": "CC BY 4.0", "CC-BY-SA-4.0": "CC BY-SA 4.0" };
+        return names[id] || id || "";
+    }
+
+    function card(theme) {
+        const article = el("article", "theme-card");
+
+        const preview = el("div", "theme-preview");
+        const previewUrl = theme.preview ? ownUrl(theme.preview) : null;
+        if (previewUrl) {
+            const img = el("img");
+            img.src = previewUrl;
+            img.alt = "Preview of " + (theme.name || theme.folder);
+            img.loading = "lazy";
+            preview.appendChild(img);
+        } else {
+            preview.appendChild(el("span", "theme-no-preview", "No preview yet"));
+        }
+        article.appendChild(preview);
+
+        const body = el("div", "theme-card-body");
+        body.appendChild(el("h3", null, theme.name || theme.folder));
+        if (theme.author) body.appendChild(el("p", "theme-by", "by " + theme.author));
+
+        const tags = el("div", "theme-tags");
+        if (theme.license) tags.appendChild(el("span", "theme-tag", licenseLabel(theme.license)));
+        if (theme.has_music) tags.appendChild(el("span", "theme-tag", "Music"));
+        if (theme.size) tags.appendChild(el("span", "theme-tag", formatSize(theme.size)));
+        body.appendChild(tags);
+
+        const zipUrl = ownUrl(theme.zip);
+        if (zipUrl) {
+            const download = el("a", "download-button theme-download", "Download");
+            download.href = zipUrl;
+            download.setAttribute("download", "");
+            body.appendChild(download);
+        }
+        if (theme.sha256) {
+            // Tucked away: only people checking a download by hand want it.
+            const details = el("details", "theme-hash");
+            details.appendChild(el("summary", null, "Checksum"));
+            details.appendChild(el("p", null, "SHA-256 " + theme.sha256));
+            body.appendChild(details);
+        }
+
+        article.appendChild(body);
+        return article;
+    }
+
+    function emptyState() {
+        const box = el("div", "theme-empty");
+        box.appendChild(el("h3", null, "No themes yet"));
+        box.appendChild(el("p", null, "This collection has only just opened. Make the first theme, and it will appear here as soon as it's merged."));
+        const make = el("a", "download-button", "Make the first theme");
+        make.href = "#make";
+        box.appendChild(make);
+        return box;
+    }
+
+    function render() {
+        const query = search.value.trim().toLowerCase();
+        const shown = themes.filter((theme) => {
+            if (!query) return true;
+            return ((theme.name || "") + " " + (theme.author || "") + " " + (theme.folder || ""))
+                .toLowerCase().includes(query);
+        });
+
+        list.textContent = "";
+        if (themes.length === 0) {
+            count.textContent = "Themes appear here as soon as they're added.";
+            list.appendChild(emptyState());
+            return;
+        }
+        count.textContent = themes.length === 1 ? "1 theme to choose from." : themes.length + " themes to choose from.";
+        if (shown.length === 0) {
+            list.appendChild(el("p", "theme-status", "No theme matches \u201c" + search.value.trim() + "\u201d."));
+            return;
+        }
+        const grid = el("div", "theme-grid");
+        shown.forEach((theme) => grid.appendChild(card(theme)));
+        list.appendChild(grid);
+    }
+
+    fetch(themesJsonUrl, { cache: "no-cache" })
+        .then((response) => {
+            if (!response.ok) throw new Error(response.status);
+            return response.json();
+        })
+        .then((index) => {
+            themes = Array.isArray(index.themes) ? index.themes.slice() : [];
+            themes.sort((a, b) =>
+                (a.name || a.folder || "").localeCompare(b.name || b.folder || "")
+            );
+            search.hidden = themes.length < 2;
+            render();
+        })
+        .catch(() => {
+            count.textContent = "";
+            list.textContent = "";
+            const message = el("p", "theme-status", "The theme list didn't load. ");
+            const link = el("a", null, "Open themes.json");
+            link.href = themesJsonUrl;
+            message.appendChild(link);
+            list.appendChild(message);
+        });
+
+    search.addEventListener("input", render);
+})();

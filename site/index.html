@@ -6,7 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RiftWii</title>
-    <link rel="stylesheet" href="css/style.css?v=20261016-3">
+    <link rel="stylesheet" href="css/lightbox.css?v=20261021-6">
+    <link rel="stylesheet" href="css/style.css?v=20261021-7">
 
     <meta property="og:title" content="RiftWii">
 
@@ -42,6 +43,32 @@
 >
 </head>
 <body class="page-locked">
+    <script>
+        // The title intro plays once per visit (per browser tab session). Any
+        // later load of this page starts in the loaded state, before the first
+        // paint, so the splash never flashes. The flag is set as soon as the
+        // intro starts, so skipping it or leaving early still counts.
+        (function () {
+            var seen = false;
+            try {
+                seen = window.sessionStorage.getItem("riftwiiIntroShown") === "1";
+                if (!seen) {
+                    window.sessionStorage.setItem("riftwiiIntroShown", "1");
+                }
+            } catch (error) {
+                // Storage is blocked: a visitor who came from another page of
+                // this site has already seen the intro.
+                try {
+                    seen = document.referrer.indexOf(window.location.origin + "/") === 0;
+                } catch (referrerError) {
+                    seen = false;
+                }
+            }
+            if (seen) {
+                document.body.className = "loaded";
+            }
+        })();
+    </script>
     <div class="background">
         <div class="haze-main"></div>
         <div class="mist haze-1"></div>
@@ -60,13 +87,26 @@
             <span class="tbar-arrow">‹</span>
         </button>
 
-        <div class="tbar-brand">RIFTWII NAVI</div>
+        <div class="tbar-brand">RIFTWII<span class="tbar-brand-extra"> NAVI</span></div>
 
-        <nav class="tbar-links">
+        <button
+            class="tbar-menu-button"
+            id="navMenuButton"
+            type="button"
+            aria-label="Menu"
+            aria-expanded="false"
+            aria-controls="navPanel"
+        >
+            <span class="tbar-menu-icon" aria-hidden="true"></span>
+            <span class="tbar-menu-text">Menu</span>
+        </button>
+
+        <nav class="tbar-links" id="navPanel" aria-label="Sections">
             <a class="active" data-section="home" href="#home">Home</a>
+            <a data-section="download" href="#download">Download</a>
+            <a href="themes.html">Themes</a>
             <a data-section="features" href="#features">Features</a>
             <a data-section="tutorials" href="#tutorials">Tutorials</a>
-            <a data-section="download" href="#download">Download</a>
             <a data-section="socials" href="#socials">Socials</a>
             <a data-section="credits" href="#credits">Credits</a>
 
@@ -80,6 +120,7 @@
             </button>
         </nav>
     </aside>
+    <div class="nav-scrim" id="navScrim" aria-hidden="true"></div>
 
     <main class="page-content">
         <section class="hero" id="home">
@@ -100,6 +141,35 @@
             </div>
         </section>
 
+        <section class="page-section" id="download">
+            <div class="content-shell">
+                <article class="content-box section-box reveal-box">
+
+                    <span class="box-kicker">DOWNLOAD</span>
+
+
+                    <div class="release-grid">
+                        <div class="release-card stable-release">
+                            <span class="release-type">LATEST VERSION</span>
+<h3 id="latestVersion">Checking latest release...</h3>
+
+<a
+    class="download-button release-button"
+    id="latestReleaseLink"
+    href="https://github.com/KakarottoCake/Riftwii/releases/latest"
+    target="_blank"
+    rel="noopener noreferrer"
+>
+    Download Latest Release
+</a>
+                        </div>
+
+
+                    </div>
+                </article>
+            </div>
+        </section>
+
 <section class="page-section" id="features">
             <div class="content-shell">
                 <article class="content-box section-box reveal-box">
@@ -107,46 +177,46 @@
             <div class="grid-image">
                 <img
                     src="https://github.com/KakarottoCake/Riftwii/raw/main/docs/images/home.png"
-                    alt="Placeholder image"
+                    alt="The RiftWii Home screen with the game tiles"
                 >
 
                 <img
                     src="https://github.com/KakarottoCake/Riftwii/raw/main/docs/images/shelf.png"
-                    alt="Placeholder image"
+                    alt="The shelf view: game boxes on a wooden shelf"
                 >
 
                 <img
                     src="https://github.com/KakarottoCake/Riftwii/raw/main/docs/images/channels.png"
-                    alt="Placeholder image"
+                    alt="The Home screen in banner view, with wide game banners"
                 >
 
                 <img
                     src="https://github.com/KakarottoCake/Riftwii/raw/main/docs/images/channel-banner.png"
-                    alt="Placeholder image"
+                    alt="A game's start screen with its channel banner, Settings and Start"
                 >
                 <img
                     src="https://github.com/KakarottoCake/Riftwii/raw/main/docs/images/game.png"
-                    alt="Placeholder image"
+                    alt="A game's page with its details and the Play button"
                 >
                 <img
                     src="https://github.com/KakarottoCake/Riftwii/raw/main/docs/images/mods.png"
-                    alt="Placeholder image"
+                    alt="The mods list for a game"
                 >
                 <img
                     src="https://github.com/KakarottoCake/Riftwii/raw/main/docs/images/cheats.png"
-                    alt="Placeholder image"
+                    alt="The cheats list for a game"
                 >
                 <img
                     src="https://github.com/KakarottoCake/Riftwii/raw/main/docs/images/midnight.png"
-                    alt="Placeholder image"
+                    alt="The Home screen in a dark theme"
                 >
                 <img
                     src="https://github.com/KakarottoCake/Riftwii/raw/main/docs/images/settings.png"
-                    alt="Placeholder image"
+                    alt="The RiftWii settings screen"
                 >
                 <img
                     src="https://github.com/KakarottoCake/Riftwii/raw/main/docs/images/homemenu.png"
-                    alt="Placeholder image"
+                    alt="The in-game HOME menu"
                 >
             </div>
                     <h2>What RiftWii can Do:</h2>
@@ -251,37 +321,6 @@
                 </article>
             </div>
         </section>
-
-        <section class="page-section" id="download">
-            <div class="content-shell">
-                <article class="content-box section-box reveal-box">
-
-                    <span class="box-kicker">DOWNLOAD</span>
-                    <img class="placeholder-image" src="resources/img/banner.png" alt="banner">
-
-
-                    <div class="release-grid">
-                        <div class="release-card stable-release">
-                            <span class="release-type">LATEST VERSION</span>
-<h3 id="latestVersion">Checking latest release...</h3>
-
-<a
-    class="download-button release-button"
-    id="latestReleaseLink"
-    href="https://github.com/KakarottoCake/Riftwii/releases/latest"
-    target="_blank"
-    rel="noopener noreferrer"
->
-    Download Latest Release
-</a>
-                        </div>
-
-
-                    </div>
-                </article>
-            </div>
-        </section>
-
 
 <section class="page-section" id="socials">
 
@@ -439,5 +478,6 @@
     </div>
 </footer>
 
-    <script src="java/script.js?v=20261016-6"></script></body>
+    <script src="java/script.js?v=20261021-7"></script><script src="java/lightbox.js?v=20261021-6"></script>
+</body>
 </html>
